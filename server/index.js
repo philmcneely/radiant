@@ -24,6 +24,7 @@ import { ollamaBin, hermesBin, SPAWN_ENV } from './ollama.js'
 import { commandRisk } from './util.js'
 import { claimLock, beatLock, releaseLock, describeHolder, sweepLegacyLocks, BEAT_MS } from './lock.js'
 import { prStatus } from './pr.js'
+import { registerGitRoutes } from './git-changes-routes.js'
 const LOCK_HOST = computerName()   // "Tony's Home MBP M4", not a DNS name
 import { IS_MAC, openCommand, chromeBinary, tailscaleBinary, defaultShell, cpuName, osVersion as osProductVersion, computerName } from './platform.js'
 import { listFacts, addFacts, addFactManual, deleteFact, clearFacts, relevantFacts } from './memory.js'
@@ -3342,6 +3343,9 @@ app.post('/api/sessions/:id/checkpoint/restore', async (req, res) => {
     res.json({ ok: true, touched: r.touched, safety: r.safety, session: s })
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
+
+// ---------- Changes panel: status / diff / commit / undo (server/git-changes.js) ----------
+registerGitRoutes(app, { loadSession, activeTurns, dataDir: RADIANT_DIR })
 
 // rewind: drop all messages from `index` onward (branch the conversation)
 app.post('/api/sessions/:id/truncate', (req, res) => {

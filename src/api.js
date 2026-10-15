@@ -586,3 +586,17 @@ export function phoneLink (address, token) {
  */
 export const EXTENSION_ID = 'jhljglakgocklinpblgcoppljflnacfk'
 export const EXTENSION_STORE_URL = `https://chromewebstore.google.com/detail/${EXTENSION_ID}`
+
+/**
+ * The Changes panel (docs/changes-panel.md). A failure throws an Error whose
+ * message is already plain language; `e.body` keeps `output` (a commit hook's
+ * text) and `snapshotId`. Pass the last `revision` to `changes` to get a tiny
+ * `{ unchanged: true }` back when nothing moved.
+ */
+export const changesApi = {
+  changes: (id, rev) => json('GET', `/api/sessions/${id}/changes${rev ? `?rev=${encodeURIComponent(rev)}` : ''}`),
+  diff: (id, p, staged) => json('GET', `/api/sessions/${id}/changes/diff?path=${encodeURIComponent(p)}${staged === undefined ? '' : `&staged=${staged ? 1 : 0}`}`),
+  commit: (id, body) => json('POST', `/api/sessions/${id}/changes/commit`, body),
+  undo: (id, paths) => json('POST', `/api/sessions/${id}/changes/undo`, { paths, mode: 'discard' }),
+  undoRestore: (id, snapshotId) => json('POST', `/api/sessions/${id}/changes/undo/restore`, { snapshotId })
+}
