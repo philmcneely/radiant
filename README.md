@@ -77,6 +77,16 @@
   (with a second opinion on each from a small decision model), or allow all.
 - **Undo** — every reply that edits files leaves a checkpoint; roll the files
   back and keep the conversation.
+- **Changes panel** — a right-hand tab listing what the agent changed in the
+  chat's folder: M/A/D/R/U letters, +/- line counts, an inline diff, a commit
+  box for the files you tick, and Undo with a one-hour Restore. Nothing is
+  ever pushed. Sidebar rows show each chat's branch and lines changed.
+- **Your Claude Code and Codex subscriptions** (opt-in) — list the sessions you
+  started in the Claude Code and Codex apps, continue them in Radiant, or pick
+  either as a chat's model. They run on their own sign-in, so no API key. Off
+  until you turn it on, private to the Mac unless you allow other devices.
+- **Open chats as tabs**, a composer bar that states its model, thinking level
+  and permission mode in words, and long turns that fold to "Worked for 2m 39s".
 - **Your project's rules** — Radiant reads a project's `AGENTS.md`,
   `CLAUDE.md`, `.clinerules` or `.cursorrules` into every chat, and shows the
   branch's pull request and CI status above the composer.
