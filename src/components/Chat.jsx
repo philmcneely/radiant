@@ -1144,7 +1144,7 @@ function PrRow ({ cwd, sessionId }) {
   )
 }
 
-export default function Chat ({ session, live, todos = [], stats, approval, question, onAnswer, usage, error, models, agents = [], recipes = [], onSend, onStop, onApproval, onPickModel, onToggleTools, onToggleComputer, onTogglePlan, onSetCwd, onNew, onNewGroup, onTruncate, onRefreshModels, skillSuggestion, onReviewSkill, onDismissSuggestion, onOpenLibrary, rightOpen, onToggleRight, onMenu, approvalMode = 'ask', onCycleApproval, onFork, onFollowUp, onSessionReplaced, skills = [], onAddSkill, onRemoveSkill, serverHost, platform, onSetEffort, showThinking = true, onToggleThinking, voice = null, onToggleVoice }) {
+export default function Chat ({ session, live, todos = [], stats, approval, question, onAnswer, usage, error, models, agents = [], recipes = [], onSend, onStop, onApproval, onPickModel, onToggleTools, onToggleComputer, onTogglePlan, onSetCwd, onNew, onNewGroup, onTruncate, onRefreshModels, skillSuggestion, onReviewSkill, onDismissSuggestion, onOpenLibrary, rightOpen, onToggleRight, onMenu, approvalMode = 'ask', onCycleApproval, onFork, onFollowUp, onSessionReplaced, skills = [], onAddSkill, onRemoveSkill, serverHost, platform, onSetEffort, showThinking = true, onToggleThinking, voice = null, onToggleVoice, tabsBar = null }) {
   // ⚠️ TOOLS RUN ON THE SERVER'S MAC. Computer control is the one where that is
   // dangerous rather than merely surprising: the mouse that moves, the keys that
   // get typed and the screen that is captured all belong to the machine running
@@ -1484,6 +1484,7 @@ export default function Chat ({ session, live, todos = [], stats, approval, ques
 
   return (
     <main className='main'>
+      {tabsBar}
       <div className='topbar'>
         <button className='menu-btn' onClick={onMenu} title='Menu' aria-label='Open menu'><MenuIcon /></button>
         <div className='title'>{session.title}</div>

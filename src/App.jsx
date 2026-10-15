@@ -12,6 +12,7 @@ import { spokenFrom, progressLine } from '../server/voice-text.js'
 import Sidebar from './components/Sidebar.jsx'
 import WhatsNew from './components/WhatsNew.jsx'
 import Chat, { GroupPicker } from './components/Chat.jsx'
+import SessionTabs from './components/SessionTabs.jsx'
 import RightPanel from './components/RightPanel.jsx'
 import Settings from './components/Settings.jsx'
 import TaskBoard from './components/TaskBoard.jsx'
@@ -112,6 +113,12 @@ function DesktopApp () {
   // chats whose turn finished while another chat was open — listed under "For you"
   // until they are opened
   const [finishedAway, setFinishedAway] = useState({})
+  // chats open as tabs: ids in the order they were opened, remembered across restarts
+  const [tabs, setTabs] = useState(() => { try { const t = JSON.parse(localStorage.getItem('radiant.tabs') || '[]'); return Array.isArray(t) ? t.filter(x => typeof x === 'string').slice(0, 12) : [] } catch { return [] } })
+  useEffect(() => { try { localStorage.setItem('radiant.tabs', JSON.stringify(tabs)) } catch { /* private window */ } }, [tabs])
+  useEffect(() => { const id = session?.id; if (id) setTabs(t => (t.includes(id) ? t : [...t, id].slice(-12))) }, [session?.id])
+  // a deleted chat leaves the strip; the list is only trusted once it has loaded
+  useEffect(() => { if (sessions.length) setTabs(t => { const live = new Set(sessions.map(s => s.id)); const n = t.filter(id => live.has(id)); return n.length === t.length ? t : n }) }, [sessions])
   const setQuestionFor = (id, v) => setQuestionMap(m => {
     if (v == null) { if (!(id in m)) return m; const { [id]: _d, ...rest } = m; return rest }
     return { ...m, [id]: v }
@@ -924,6 +931,18 @@ function DesktopApp () {
         />
       ) : (
       <Chat
+        tabsBar={<SessionTabs
+          tabs={tabs}
+          activeId={session?.id}
+          titleOf={id => (sessions.find(x => x.id === id)?.title || 'Chat')}
+          finished={finishedAway}
+          onPick={id => openSession(id)}
+          onClose={id => {
+            const rest = tabs.filter(x => x !== id)
+            setTabs(rest)
+            if (id === session?.id) { const at = tabs.indexOf(id); const next = rest[Math.min(at, rest.length - 1)]; if (next) openSession(next); else setSession(null) }
+          }}
+        />}
         serverHost={config.serverHost}
         platform={config.platform}
         skills={config.skills || []}

@@ -3895,3 +3895,16 @@ html[data-window-chrome='native'] .brand { padding-top: 12px; }
 .chg-empty.is-err { color: var(--danger); }
 .session-git { display: flex; align-items: center; gap: 5px; margin-top: 2px; font-size: 10.5px; color: var(--text-faint); font-family: var(--font-mono); overflow: hidden; white-space: nowrap; }
 .session-git .chg-add, .session-git .chg-del { font-size: 10.5px; }
+
+/* ── open-chat tabs (SessionTabs.jsx) ─────────────────────────────────────── */
+.stabs { display: flex; gap: 2px; padding: 6px 10px 0; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); flex: none; }
+.stabs::-webkit-scrollbar { display: none; }
+.stab { display: flex; align-items: center; flex: 0 1 190px; min-width: 96px; border-radius: 8px 8px 0 0; border: 1px solid transparent; border-bottom: 0; color: var(--text-muted); }
+.stab:hover { background: var(--bg-hover); }
+.stab.is-active { background: var(--bg); border-color: var(--border); color: var(--text); margin-bottom: -1px; }
+.stab-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; border: 0; background: none; color: inherit; font: inherit; font-size: 12.5px; padding: 6px 4px 6px 10px; cursor: pointer; text-align: left; }
+.stab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stab-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.stab-x { border: 0; background: none; color: var(--text-faint); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 8px; opacity: 0; }
+.stab:hover .stab-x, .stab.is-active .stab-x, .stab-x:focus-visible { opacity: 1; }
+.stab-x:hover { color: var(--text); }
