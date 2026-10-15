@@ -586,3 +586,16 @@ export function phoneLink (address, token) {
  */
 export const EXTENSION_ID = 'jhljglakgocklinpblgcoppljflnacfk'
 export const EXTENSION_STORE_URL = `https://chromewebstore.google.com/detail/${EXTENSION_ID}`
+
+// Claude Code and Codex on this Mac (server/cli-agents-routes.js, docs/cli-agents.md).
+// Off until the person turns settings.cliAgents.enabled on; a 403 carries
+// e.body.code of 'cli-agents-disabled' or 'cli-agents-remote'.
+export const cliAgents = () => json('GET', '/api/cli-agents')
+export const cliSessions = ({ tool, q, limit } = {}) => {
+  const p = new URLSearchParams()
+  if (tool) p.set('tool', tool)
+  if (q) p.set('q', q)
+  if (limit) p.set('limit', String(limit))
+  return json('GET', '/api/cli-sessions' + (p.toString() ? `?${p}` : ''))
+}
+export const importCliSession = (tool, id) => json('POST', '/api/cli-sessions/import', { tool, id })

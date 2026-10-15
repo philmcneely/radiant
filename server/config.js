@@ -30,7 +30,10 @@ export function defaultDataDir () { return path.join(os.homedir(), '.radiant') }
 // These live beside the location pointer, OUTSIDE the data directory, so they
 // can never sync no matter which folder is shared. Everything else stays in
 // config.json and follows him between Macs, which is the point of syncing.
-export const MACHINE_KEYS = ['defaultModel', 'defaultProvider', 'defaultCwd']
+// cliAgents is here for the same reason: it says whether THIS Mac lets Radiant read its
+// Claude Code / Codex history (server/cli-agents-routes.js). Opting in on one Mac must
+// not switch it on for another Mac that shares the folder and never agreed.
+export const MACHINE_KEYS = ['defaultModel', 'defaultProvider', 'defaultCwd', 'cliAgents']
 const MACHINE_FILE = path.join(os.homedir(), '.radiant-machine.json')
 
 export function loadMachineSettings () {
@@ -454,7 +457,10 @@ const DEFAULT_CONFIG = {
     approveCommands: true,
     autoUpdateCheck: true,
     defaultModel: null,
-    defaultCwd: os.homedir()
+    defaultCwd: os.homedir(),
+    // Use Claude Code / Codex sessions and sign-ins already on this Mac. Off until turned on;
+    // allowRemote lets a phone or second Mac use them too. See server/cli-agents-routes.js.
+    cliAgents: { enabled: false, allowRemote: false }
   }
 }
 
@@ -1023,7 +1029,7 @@ export function listSessions () {
     .map(f => {
       try {
         const s = JSON.parse(fs.readFileSync(path.join(SESSIONS_DIR, f), 'utf8'))
-        return { id: s.id, title: s.title, model: s.model, provider: s.provider, cwd: s.cwd, agentId: s.agentId || null, projectId: s.projectId || null, pinned: Boolean(s.pinned), archived: Boolean(s.archived), updatedAt: s.updatedAt, messageCount: s.messages.length }
+        return { id: s.id, title: s.title, model: s.model, provider: s.provider, cwd: s.cwd, agentId: s.agentId || null, projectId: s.projectId || null, pinned: Boolean(s.pinned), archived: Boolean(s.archived), updatedAt: s.updatedAt, messageCount: s.messages.length, cli: s.cli ? { tool: s.cli.tool, id: s.cli.id } : null }
       } catch { return null }
     })
     .filter(Boolean)

@@ -429,6 +429,9 @@ app.put('/api/settings', (req, res) => {
   // to a file outside the shared folder. Writing them into config.json would
   // mean picking a model on one Mac changes it on a Mac that does not have it.
   const body = req.body || {}
+  // cliAgents decides whether this Mac's Claude Code / Codex history is readable, so
+  // only the Mac itself changes it (a device on the network cannot switch it on).
+  if ('cliAgents' in body) { if (isLocalRequest(req)) body.cliAgents = normalizeCliSettings(body.cliAgents, loadMachineSettings().cliAgents); else delete body.cliAgents }
   const machine = {}
   for (const k of MACHINE_KEYS) if (k in body) machine[k] = body[k]
   if (Object.keys(machine).length) saveMachineSettings(machine)
@@ -1672,6 +1675,16 @@ app.post('/api/oauth/:id/signout', (req, res) => {
 })
 
 // ---------- models ----------
+// Claude Code and Codex as backends (server/cli-agents-routes.js): list/import their saved
+// sessions, offer them in the model list, and run a chat through them. Off until turned on.
+// (Imported here, mid-file, so a concurrent edit to the import block above cannot collide.)
+import { registerCliAgentRoutes, normalizeCliSettings } from './cli-agents-routes.js'
+import { loadMachineSettings } from './config.js'
+const cliAgents = registerCliAgentRoutes(app, {
+  getCliSettings: () => loadMachineSettings().cliAgents, // fresh each time: PUT /api/settings writes the machine file, not `config`
+  loadSession, saveSession, listSessions, isLocalRequest
+})
+
 app.get('/api/models', async (req, res) => {
   const results = await Promise.all(config.providers.map(async p => {
     const hasKey = Boolean(config.keys[p.id])
@@ -1685,7 +1698,7 @@ app.get('/api/models', async (req, res) => {
     models.sort((a, b) => (b.id === JEV_ROUTER) - (a.id === JEV_ROUTER) || a.id.localeCompare(b.id))
     return models.map(m => ({ ...m, provider: p.id, providerName: p.name }))
   }))
-  res.json(results.flat())
+  res.json([...results.flat(), ...(await cliAgents.modelEntries(req))])
 })
 
 // ---------- local models (Ollama) ----------
@@ -3575,6 +3588,15 @@ app.post('/api/chat', async (req, res) => {
       res.end()
     }
     return
+  }
+
+  // Claude Code / Codex chats are relayed like Hermes: their own model, tools and
+  // memory do the work, so none of the provider/skill/MCP setup below applies.
+  if (cliAgents.handles(session)) {
+    return cliAgents.chat(req, res, {
+      session, content, messageId, controller, activeTurns, reflectTaskState, saveTurnSession, startHeartbeat, recordTurnFailure, recordTurnStopped,
+      approvalMode: config.settings.approvalMode || (config.settings.approveCommands === false ? 'off' : 'ask')
+    })
   }
 
   let provider = config.providers.find(p => p.id === session.provider)
