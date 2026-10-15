@@ -250,7 +250,7 @@ function CliAgentsBlock ({ s, onSettings }) {
       <div style={{ fontSize: 13, fontWeight: 500 }}>Claude Code and Codex sessions</div>
       <div style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 8px' }}>
         Use the Claude Code and Codex apps you already pay for, and pick up chats you started in them. No API key needed — they use their own sign-in.
-        {info ? (found.length ? <> Found on this Mac: {found.map(a => `${a.name || a.id}${a.version ? ' ' + a.version : ''}`).join(', ')}.</> : <> Neither is installed on this Mac yet.</>) : null}
+        {info ? (found.length ? <> Found on this Mac: {found.map(a => `${a.label || a.id}${a.version ? ' ' + a.version : ''}`).join(', ')}.</> : <> Neither is installed on this Mac yet.</>) : null}
       </div>
       <label className='check-row'>
         <input type='checkbox' checked={cli.enabled === true} onChange={e => onSettings({ cliAgents: { ...cli, enabled: e.target.checked } })} />

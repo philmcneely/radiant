@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { cliApi, api } from '../api.js'
 import { ageShort } from '../timeago.js'
 
@@ -49,7 +50,8 @@ export default function CliSessions ({ onClose, onOpen }) {
     try { const s = r.radiantId ? { id: r.radiantId } : await cliApi.importSession(r.tool, r.id); onOpen(s.id) } catch (e) { setErr(e.message) } finally { setBusy(null) }
   }
 
-  return (
+  // a portal: the sidebar is its own stacking context, and the dialog must sit over the whole window
+  return createPortal(
     <div className='clis-back' onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className='clis' role='dialog' aria-label='Claude Code and Codex sessions'>
         <div className='clis-head'>
@@ -97,6 +99,7 @@ export default function CliSessions ({ onClose, onOpen }) {
         )}
         {!usable && err && <div className='clis-err'>{err}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
