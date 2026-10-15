@@ -54,6 +54,8 @@ run "extension ports" node scripts/test-ext-ports.mjs
 run "one turn per chat" node scripts/test-chat-claim-live.mjs
 run "token refresh"  node scripts/test-oauth-refresh.mjs
 run "sessions"       node scripts/test-sessions.mjs
+run "cli sessions"    node scripts/test-cli-sessions.mjs
+run "cli agent turns" node scripts/test-cli-run.mjs
 printf '\n'
 if [ "$fail" -ne 0 ]; then echo "SOME GATES FAILED"; exit 1; fi
 echo "ALL GATES GREEN"
