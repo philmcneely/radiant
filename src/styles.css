@@ -3908,3 +3908,23 @@ html[data-window-chrome='native'] .brand { padding-top: 12px; }
 .stab-x { border: 0; background: none; color: var(--text-faint); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 8px; opacity: 0; }
 .stab:hover .stab-x, .stab.is-active .stab-x, .stab-x:focus-visible { opacity: 1; }
 .stab-x:hover { color: var(--text); }
+
+/* ── Claude Code & Codex sessions (CliSessions.jsx) ──────────────────────── */
+.clis-back { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.clis { width: min(680px, 100%); max-height: min(720px, 90vh); display: flex; flex-direction: column; background: var(--bg-raised); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,.5); overflow: hidden; }
+.clis-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; }
+.clis-title { font-weight: 600; font-size: 14px; }
+.clis-x { border: 0; background: none; color: var(--text-faint); font-size: 20px; line-height: 1; cursor: pointer; }
+.clis-bar { display: flex; gap: 10px; align-items: center; padding: 0 16px 10px; }
+.clis-bar .session-search { flex: 1; margin: 0; }
+.clis-list { overflow-y: auto; padding: 0 8px 14px; }
+.clis-note { padding: 14px 18px; color: var(--text-muted); font-size: 12.5px; line-height: 1.55; }
+.clis-note p { margin: 0 0 10px; }
+.clis-err { margin: 0 16px 8px; color: var(--danger); font-size: 12px; }
+.clis-cwd { padding: 10px 10px 4px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); font-family: var(--font-mono); }
+.clis-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; border: 0; background: none; text-align: left; padding: 8px 10px; border-radius: 9px; color: var(--text); cursor: pointer; font: inherit; }
+.clis-row:hover:not(:disabled) { background: var(--bg-hover); }
+.clis-row:disabled { opacity: .5; cursor: progress; }
+.clis-row-title { font-size: 13px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clis-row-meta { font-size: 11px; color: var(--text-faint); display: flex; gap: 6px; align-items: center; }
+.clis-tool { padding: 0 6px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-muted); }

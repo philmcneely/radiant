@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { SKILL_CATEGORIES } from '../../server/skill-categories.js'
 import qrcode from 'qrcode-generator'
 import { verdict, FIT_LABEL, FITS_WELL, FITS_TIGHT, FITS_NO, COMFORTABLE } from '../fit.js'
-import { api, startDownload, getDownloads, cancelDownload, streamQuantize, getServer, setServer, testServer, saveToFile, deviceNoun, phoneLink, EXTENSION_STORE_URL } from '../api.js'
+import { api, cliApi, startDownload, getDownloads, cancelDownload, streamQuantize, getServer, setServer, testServer, saveToFile, deviceNoun, phoneLink, EXTENSION_STORE_URL } from '../api.js'
 import { THEMES, MODES, FONTS, UI_SCALES, applyTheme, hexToOklch, accentHex, glyphColor } from '../theme.js'
 import { paletteWarnings, deriveAccent } from '../palette.js'
 import { MOTIONS } from './MotionBackground.jsx'
@@ -239,6 +239,34 @@ const LIVE_VOICES = [
   ['willow', 'Willow — Irish, feminine'], ['stone', 'Stone — Irish, masculine'], ['delta', 'Delta — Southern U.S., feminine'],
   ['cinder', 'Cinder — Southern U.S., masculine'], ['beacon', 'Beacon — Filipino English, masculine']
 ]
+/** Claude Code and Codex, signed in on this Mac: off until asked, private to this Mac until told otherwise. */
+function CliAgentsBlock ({ s, onSettings }) {
+  const cli = s.cliAgents || {}
+  const [info, setInfo] = useState(null)
+  useEffect(() => { cliApi.agents(true).then(setInfo).catch(() => setInfo(null)) }, [cli.enabled])
+  const found = (info?.agents || []).filter(a => a.available)
+  return (
+    <div style={{ margin: '14px 0 4px' }}>
+      <div style={{ fontSize: 13, fontWeight: 500 }}>Claude Code and Codex sessions</div>
+      <div style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 8px' }}>
+        Use the Claude Code and Codex apps you already pay for, and pick up chats you started in them. No API key needed — they use their own sign-in.
+        {info ? (found.length ? <> Found on this Mac: {found.map(a => `${a.name || a.id}${a.version ? ' ' + a.version : ''}`).join(', ')}.</> : <> Neither is installed on this Mac yet.</>) : null}
+      </div>
+      <label className='check-row'>
+        <input type='checkbox' checked={cli.enabled === true} onChange={e => onSettings({ cliAgents: { ...cli, enabled: e.target.checked } })} />
+        <span>Let Radiant use them <span className='desc'>— lists their saved sessions, lets you continue them here, and adds them to the model menu</span></span>
+      </label>
+      <label className='check-row' style={{ opacity: cli.enabled ? 1 : 0.5 }}>
+        <input type='checkbox' disabled={!cli.enabled} checked={cli.allowRemote === true} onChange={e => onSettings({ cliAgents: { ...cli, allowRemote: e.target.checked } })} />
+        <span>Also from my phone and other devices <span className='desc'>— off by default; see the note below</span></span>
+      </label>
+      <div style={{ fontSize: 11.5, color: 'var(--text-faint)', marginTop: 6 }}>
+        <strong>What this reads.</strong> The saved sessions are a full record of what you asked those tools and every file they opened, so this is off until you turn it on, and other devices cannot see them unless you also allow that. Radiant never touches their sign-in files. Radiant&apos;s own tools, memory and skills do not apply to these chats — the tool is the agent.
+      </div>
+    </div>
+  )
+}
+
 function VoicePane ({ config, onSettings, onConfigChange }) {
   const v = config?.settings?.voice || {}
   const on = Boolean(v.enabled)
@@ -2055,6 +2083,7 @@ function AgentPane ({ config, onSettings }) {
           <strong>Project folder only</strong> lets commands write inside the chat's project folder, temporary files and package caches, and nowhere else — not your other projects, not your settings files. <strong>No internet</strong> also blocks the web, while local servers keep working. A blocked command says so, and the agent is told to ask you rather than try again. Installing things globally (Homebrew, <code>npm -g</code>) needs it off.
         </div>
       </div>
+      <CliAgentsBlock s={s} onSettings={onSettings} />
       <label className='check-row'>
         <input
           type='checkbox'

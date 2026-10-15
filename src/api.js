@@ -593,6 +593,12 @@ export const EXTENSION_STORE_URL = `https://chromewebstore.google.com/detail/${E
  * text) and `snapshotId`. Pass the last `revision` to `changes` to get a tiny
  * `{ unchanged: true }` back when nothing moved.
  */
+export const cliApi = {
+  agents: fresh => json('GET', `/api/cli-agents${fresh ? '?fresh=1' : ''}`),
+  sessions: ({ tool, q, limit } = {}) => json('GET', `/api/cli-sessions?${new URLSearchParams({ ...(tool ? { tool } : {}), ...(q ? { q } : {}), limit: String(limit || 60) })}`),
+  importSession: (tool, id) => json('POST', '/api/cli-sessions/import', { tool, id })
+}
+
 export const changesApi = {
   changes: (id, rev) => json('GET', `/api/sessions/${id}/changes${rev ? `?rev=${encodeURIComponent(rev)}` : ''}`),
   diff: (id, p, staged) => json('GET', `/api/sessions/${id}/changes/diff?path=${encodeURIComponent(p)}${staged === undefined ? '' : `&staged=${staged ? 1 : 0}`}`),

@@ -3,6 +3,7 @@ import { ageShort } from '../timeago.js'
 import { Icon } from './Icons.jsx'
 import GlideSelect from './GlideSelect.jsx'
 import HoldButton from './HoldButton.jsx'
+import CliSessions from './CliSessions.jsx'
 import { glyphColor } from '../theme.js'
 import { AgentGlyph } from './AgentIcons.jsx'
 import { isImported } from './Chat.jsx'
@@ -389,6 +390,7 @@ export default function Sidebar ({ section = 'chat', onSection, onOpenAgents, se
     const t = setInterval(load, 30000)
     return () => { alive = false; clearInterval(t) }
   }, [sumIds, working])
+  const [cliOpen, setCliOpen] = useState(false)
   const rowCtx = { agentOf, activeId, working, onOpen, projects, onMoveSession, onPin, onArchive, onDelete, edit, gitSum }
 
   return (
@@ -472,6 +474,10 @@ export default function Sidebar ({ section = 'chat', onSection, onOpenAgents, se
             </div>
           : <button className='new-group-btn' onClick={() => setEditing({ kind: 'new-project', value: '' })}><Icon.folder size={13} /> New project</button>
       )}
+      {view === 'chats' && (
+        <button className='new-group-btn' onClick={() => setCliOpen(true)}><Icon.bot size={13} /> Claude Code &amp; Codex sessions</button>
+      )}
+      {cliOpen && <CliSessions onClose={() => setCliOpen(false)} onOpen={id => { setCliOpen(false); onOpen(id) }} />}
       {view === 'bots' && agents.length >= 2 && onNewGroup && (
         /* ⚠️ AN ICON, NOT AN EMOJI. Its sibling "New project" uses Icon.folder,
            a line drawing that inherits currentColor — so on hover, where
