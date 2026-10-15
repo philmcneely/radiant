@@ -3893,3 +3893,5 @@ html[data-window-chrome='native'] .brand { padding-top: 12px; }
 .chg-note.is-err { color: var(--danger); }
 .chg-empty { padding: 28px 18px; color: var(--text-muted); text-align: center; line-height: 1.5; font-size: 12.5px; }
 .chg-empty.is-err { color: var(--danger); }
+.session-git { display: flex; align-items: center; gap: 5px; margin-top: 2px; font-size: 10.5px; color: var(--text-faint); font-family: var(--font-mono); overflow: hidden; white-space: nowrap; }
+.session-git .chg-add, .session-git .chg-del { font-size: 10.5px; }

@@ -41,6 +41,19 @@ export function registerGitRoutes (app, { loadSession, activeTurns, dataDir }) {
     } catch (e) { fail(res, e) }
   })
 
+  // One call for the sidebar: branch and +/- per chat, one git status per distinct folder.
+  app.get('/api/changes/summary', async (req, res) => {
+    const ids = String(req.query.ids || '').split(',').filter(Boolean).slice(0, 60)
+    const byCwd = new Map(); const out = {}
+    for (const id of ids) {
+      const s = loadSession(id); if (!s?.cwd) continue
+      if (!byCwd.has(s.cwd)) byCwd.set(s.cwd, gitStatus(s.cwd).catch(() => null))
+      const st = await byCwd.get(s.cwd)
+      if (st?.isRepo) out[id] = { branch: st.branch || null, files: st.totals.files, additions: st.totals.additions, deletions: st.totals.deletions }
+    }
+    res.json(out)
+  })
+
   app.get('/api/sessions/:id/changes/diff', async (req, res) => {
     const s = session(req, res); if (!s) return
     if (!req.query.path) return res.status(400).json({ ok: false, error: 'path is required' })

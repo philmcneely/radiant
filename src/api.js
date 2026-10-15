@@ -598,5 +598,6 @@ export const changesApi = {
   diff: (id, p, staged) => json('GET', `/api/sessions/${id}/changes/diff?path=${encodeURIComponent(p)}${staged === undefined ? '' : `&staged=${staged ? 1 : 0}`}`),
   commit: (id, body) => json('POST', `/api/sessions/${id}/changes/commit`, body),
   undo: (id, paths) => json('POST', `/api/sessions/${id}/changes/undo`, { paths, mode: 'discard' }),
+  summary: ids => json('GET', `/api/changes/summary?ids=${ids.join(',')}`),
   undoRestore: (id, snapshotId) => json('POST', `/api/sessions/${id}/changes/undo/restore`, { snapshotId })
 }

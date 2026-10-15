@@ -6,7 +6,7 @@ import HoldButton from './HoldButton.jsx'
 import { glyphColor } from '../theme.js'
 import { AgentGlyph } from './AgentIcons.jsx'
 import { isImported } from './Chat.jsx'
-import { api, saveToFile, getServer, deviceNoun } from '../api.js'
+import { api, changesApi, saveToFile, getServer, deviceNoun } from '../api.js'
 
 function UsageChip () {
   const [items, setItems] = useState(null)
@@ -134,7 +134,8 @@ function InlineEdit ({ placeholder, edit }) {
 }
 
 function SessionRow ({ s, showAgent = true, ctx }) {
-  const { agentOf, activeId, working, onOpen, projects, onMoveSession, onPin, onArchive, onDelete, edit } = ctx
+  const { agentOf, activeId, working, onOpen, projects, onMoveSession, onPin, onArchive, onDelete, edit, gitSum } = ctx
+    const g = gitSum?.[s.id]
     const ag = agentOf(s.agentId)
     return (
       <div
@@ -149,6 +150,13 @@ function SessionRow ({ s, showAgent = true, ctx }) {
             : <span className='session-title-text'>{s.title}</span>}
         </div>
         <span className='session-meta'>{s.model || 'no model'}{s.updatedAt ? ` · ${ageShort(s.updatedAt)}` : ''} · {s.messageCount} msg</span>
+        {g && g.branch && (
+          <span className='session-git' title={`${g.files} changed file${g.files === 1 ? '' : 's'} on ${g.branch}`}>
+            <Icon.branch size={10} /> {g.branch}
+            {g.additions > 0 && <span className='chg-add'>+{g.additions}</span>}
+            {g.deletions > 0 && <span className='chg-del'>−{g.deletions}</span>}
+          </span>
+        )}
         <div className='session-actions'>
           {/* ⚠️ A FOLDER ICON OVER A REAL <select>, not a menu of my own.
               Moving a chat is a one-of-N choice, so it stays a select — that is
@@ -370,7 +378,18 @@ export default function Sidebar ({ section = 'chat', onSection, onOpenAgents, se
     else if (e.kind === 'session') onRename?.(e.id, v)
   }
   const edit = { editing, setEditing, commit: commitEdit }
-  const rowCtx = { agentOf, activeId, working, onOpen, projects, onMoveSession, onPin, onArchive, onDelete, edit }
+  // branch and +/- per chat, one call for the whole list; re-read when a turn ends and every 30 s
+  const [gitSum, setGitSum] = useState({})
+  const sumIds = live.slice(0, 60).map(s => s.id).join(',')
+  useEffect(() => {
+    if (!sumIds) return undefined
+    let alive = true
+    const load = () => { if (!document.hidden) changesApi.summary(sumIds.split(',')).then(d => alive && setGitSum(d || {})).catch(() => {}) }
+    load()
+    const t = setInterval(load, 30000)
+    return () => { alive = false; clearInterval(t) }
+  }, [sumIds, working])
+  const rowCtx = { agentOf, activeId, working, onOpen, projects, onMoveSession, onPin, onArchive, onDelete, edit, gitSum }
 
   return (
     <nav className={'sidebar' + (width < 244 ? ' is-narrow' : '')} style={{ width }}>
