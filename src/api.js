@@ -587,18 +587,18 @@ export function phoneLink (address, token) {
 export const EXTENSION_ID = 'jhljglakgocklinpblgcoppljflnacfk'
 export const EXTENSION_STORE_URL = `https://chromewebstore.google.com/detail/${EXTENSION_ID}`
 
-/**
- * The Changes panel (docs/changes-panel.md). A failure throws an Error whose
- * message is already plain language; `e.body` keeps `output` (a commit hook's
- * text) and `snapshotId`. Pass the last `revision` to `changes` to get a tiny
- * `{ unchanged: true }` back when nothing moved.
- */
 export const cliApi = {
   agents: fresh => json('GET', `/api/cli-agents${fresh ? '?fresh=1' : ''}`),
   sessions: ({ tool, q, limit } = {}) => json('GET', `/api/cli-sessions?${new URLSearchParams({ ...(tool ? { tool } : {}), ...(q ? { q } : {}), limit: String(limit || 60) })}`),
   importSession: (tool, id) => json('POST', '/api/cli-sessions/import', { tool, id })
 }
 
+/**
+ * The Changes panel (docs/changes-panel.md). A failure throws an Error whose
+ * message is already plain language; `e.body` keeps `output` (a commit hook's
+ * text) and `snapshotId`. Pass the last `revision` to `changes` to get a tiny
+ * `{ unchanged: true }` back when nothing moved.
+ */
 export const changesApi = {
   changes: (id, rev) => json('GET', `/api/sessions/${id}/changes${rev ? `?rev=${encodeURIComponent(rev)}` : ''}`),
   diff: (id, p, staged) => json('GET', `/api/sessions/${id}/changes/diff?path=${encodeURIComponent(p)}${staged === undefined ? '' : `&staged=${staged ? 1 : 0}`}`),
@@ -607,3 +607,16 @@ export const changesApi = {
   summary: ids => json('GET', `/api/changes/summary?ids=${ids.join(',')}`),
   undoRestore: (id, snapshotId) => json('POST', `/api/sessions/${id}/changes/undo/restore`, { snapshotId })
 }
+
+// Claude Code and Codex on this Mac (server/cli-agents-routes.js, docs/cli-agents.md).
+// Off until the person turns settings.cliAgents.enabled on; a 403 carries
+// e.body.code of 'cli-agents-disabled' or 'cli-agents-remote'.
+export const cliAgents = () => json('GET', '/api/cli-agents')
+export const cliSessions = ({ tool, q, limit } = {}) => {
+  const p = new URLSearchParams()
+  if (tool) p.set('tool', tool)
+  if (q) p.set('q', q)
+  if (limit) p.set('limit', String(limit))
+  return json('GET', '/api/cli-sessions' + (p.toString() ? `?${p}` : ''))
+}
+export const importCliSession = (tool, id) => json('POST', '/api/cli-sessions/import', { tool, id })
