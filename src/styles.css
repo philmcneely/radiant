@@ -3770,3 +3770,70 @@ html[data-window-chrome='native'] .brand { padding-top: 12px; }
 /* What a project actually is, said where one is made. */
 .proj-hint { font-size: 11px; line-height: 1.4; color: var(--text-faint); padding: 4px 10px 2px; }
 .bot-new.is-set { color: var(--accent); }
+
+/* ── the bar under the message box (ComposerBar.jsx) ──────────────────────────
+   A "+" for the occasional things, labeled chips for the three that decide what
+   the next message does (model, thinking, permissions), and a chip of its own for
+   anything unusual. State is said in words and in colour, never by an icon alone. */
+.cbar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; flex: 1 1 auto; min-width: 0; }
+.cbar-anchor { position: relative; display: flex; }
+.cbar-plus {
+  width: 28px; height: 28px; padding: 0; flex: none; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer;
+}
+.cbar-plus:hover, .cbar-plus.is-open { background: var(--bg-hover); color: var(--text); border-color: var(--border-strong); }
+.cbar-plus svg, .cbar-plus .sf-icon { transition: transform .18s ease; }
+.cbar-plus.is-open svg, .cbar-plus.is-open .sf-icon { transform: rotate(45deg); }
+.cbar-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; flex: none;
+  border-radius: 999px; border: 1px solid transparent; background: transparent;
+  color: var(--text-muted); font-size: 12px; white-space: nowrap; cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.cbar-chip:hover { background: var(--bg-hover); border-color: var(--border); color: var(--text); }
+.cbar-chip-key { color: var(--text-faint); }
+.cbar-chip.is-set { color: var(--accent); }
+.cbar-chip.is-set .cbar-chip-key { color: var(--accent-dim); }
+.cbar-chip.is-warn { color: var(--danger); }
+.cbar-chip.is-warn:hover { background: color-mix(in oklab, var(--danger) 12%, transparent); border-color: color-mix(in oklab, var(--danger) 45%, transparent); }
+.cbar-menu {
+  position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 60; width: 310px; padding: 6px;
+  background: var(--bg-raised); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: var(--shadow-menu);
+  animation: menu-in 0.16s ease-out; transform-origin: bottom left;
+}
+.cbar-item {
+  display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--text); text-align: left; font-size: 13px; cursor: pointer;
+}
+.cbar-item:hover:not(:disabled) { background: var(--bg-hover); }
+.cbar-item:disabled { opacity: .5; cursor: default; }
+.cbar-item-icon { display: flex; align-items: center; justify-content: center; flex: none; width: 20px; padding-top: 1px; color: var(--text-muted); }
+.cbar-item.is-on .cbar-item-icon { color: var(--accent); }
+.cbar-item-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.cbar-item-hint { font-size: 11.5px; line-height: 1.35; color: var(--text-faint); }
+.cbar-item-check { display: flex; width: 14px; padding-top: 2px; color: var(--accent); }
+.cbar-sep { height: 1px; margin: 6px 4px; background: var(--border); }
+.cbar-pop {
+  position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 60; padding: 8px;
+  background: var(--bg-raised); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: var(--shadow-menu);
+  animation: menu-in 0.16s ease-out; transform-origin: bottom left;
+}
+/* the existing pickers, restyled to sit in this row (they are shared with other screens, so scope it) */
+.composer-tools .cbar .model-btn { flex: 0 1 auto; min-width: 0; max-width: 300px; }
+.composer-tools .cbar .attach-btn:has(.pill-label) {
+  width: auto; min-width: 0; height: 28px; padding: 0 10px; gap: 6px; border-radius: 999px; border: 1px solid transparent;
+}
+.composer-tools .cbar .attach-btn .pill-label { max-width: none; opacity: 1; margin-left: 0; overflow: visible; font-size: 12px; color: var(--text-muted); }
+.composer-tools .cbar .attach-btn:hover .pill-label, .composer-tools .cbar .attach-btn.is-on .pill-label { color: var(--text); }
+
+/* ── "Worked for 2m 39s": a finished turn's tool calls and narration, folded ── */
+.worked-fold { margin: 2px 0 6px; }
+.worked-fold-head {
+  display: inline-flex; align-items: center; gap: 8px; padding: 4px 8px 4px 0; border: 0; background: none;
+  color: var(--text-faint); font-size: 12.5px; cursor: pointer; text-align: left;
+}
+.worked-fold-head:hover { color: var(--text-muted); }
+.worked-fold-caret { width: 10px; font-size: 10px; }
+.worked-fold-fail { color: var(--danger); font-size: 11.5px; }
+.worked-fold-body { margin: 4px 0 8px; padding-left: 12px; border-left: 1px solid var(--border); }

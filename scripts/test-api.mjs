@@ -407,7 +407,8 @@ for (const r of results) console.log(`  ${r.ok ? '✓' : '✗'} ${r.name}${r.det
   ok(/'provider', 'effort'/.test(cfg), 'a running turn cannot clobber it')
 
   const chat = pfs.readFileSync('src/components/Chat.jsx', 'utf8')
-  ok(/EFFORT_STOPS/.test(chat) && /think-rail/.test(chat), 'there is a four-stop rail')
+  const bar = pfs.readFileSync('src/components/ComposerBar.jsx', 'utf8')   // the rail moved here with the composer bar
+  ok(/EFFORT_STOPS/.test(bar) && /think-rail/.test(bar), 'there is a four-stop rail')
   // ⚠️ IT LIVES WITH THE MODEL. The level is a property of the model you just
   // picked, and it sat at the far end of the composer's pill row, four controls
   // away from it. Tony: "thinking should be under the model selector."
@@ -416,7 +417,7 @@ for (const r of results) console.log(`  ${r.ok ? '✓' : '✗'} ${r.name}${r.det
   // different lengths — "Auto" against "Medium" — so it sat off-centre on Low and
   // clipped Medium. Tony: "you didnt fix the spacing of low medium and high text
   // in the thinking window."
-  ok(/setBox\(\{ left: el\.offsetLeft, width: el\.offsetWidth \}\)/.test(chat), 'the pill measures the active stop')
+  ok(/setBox\(\{ left: el\.offsetLeft, width: el\.offsetWidth \}\)/.test(bar), 'the pill measures the active stop')
   {
     const railCss = pfs.readFileSync('src/styles.css', 'utf8')
     ok(!/width: calc\(\(100% - 4px\) \/ 4\)/.test(railCss), 'and is not a fixed quarter of the rail')
@@ -562,7 +563,7 @@ for (const r of results) console.log(`  ${r.ok ? '✓' : '✗'} ${r.name}${r.det
     ok(!/\.attach-btn\.listening|mic-pulse/.test(cssCode), 'no mic names for a thing that is not a mic')
   }
   ok(/\.attach-btn\.is-capturing/.test(css), 'the design capture state says so')
-  ok(/designBusy \? ' is-capturing'/.test(chat), 'and the markup uses that name')
+  ok(/designBusy=\{designBusy\}/.test(chat) && /disabled=\{designBusy\}/.test(bar), 'and the Design item is disabled while it captures (it lives in the + menu now)')
   // Capturing an element is not dangerous, and --danger is spoken for by "allow all".
   ok(/\.attach-btn\.is-capturing \{[^}]*var\(--accent\)/s.test(css), 'and it is not coloured as a danger')
 

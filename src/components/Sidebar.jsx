@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { ageShort } from '../timeago.js'
 import { Icon } from './Icons.jsx'
 import GlideSelect from './GlideSelect.jsx'
 import HoldButton from './HoldButton.jsx'
@@ -147,7 +148,7 @@ function SessionRow ({ s, showAgent = true, ctx }) {
             ? <InlineEdit placeholder='Chat name…' edit={edit} />
             : <span className='session-title-text'>{s.title}</span>}
         </div>
-        <span className='session-meta'>{s.model || 'no model'} · {s.messageCount} msg</span>
+        <span className='session-meta'>{s.model || 'no model'}{s.updatedAt ? ` · ${ageShort(s.updatedAt)}` : ''} · {s.messageCount} msg</span>
         <div className='session-actions'>
           {/* ⚠️ A FOLDER ICON OVER A REAL <select>, not a menu of my own.
               Moving a chat is a one-of-N choice, so it stays a select — that is

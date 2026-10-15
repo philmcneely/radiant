@@ -1348,7 +1348,10 @@ export async function runTurn ({ provider, model, routed, verifyClaims, apiKey, 
   // and the reply the user just watched arrive vanished on reload.
   let roundText = ''
   const emitS = ev => { if (ev.type === 'text_delta') roundText += ev.text || ''; if (ev.type === 'usage') { stats.inTokens += ev.input || 0; stats.outTokens += ev.output || 0; stats.cachedIn += ev.cacheRead || 0; stats.cacheWrite += ev.cacheWrite || 0; if (ev.input) lastPrompt = ev.input; if (window_) ev = { ...ev, window: window_ } } emit(ev) }
-  const finishStats = () => { session.stats = stats; emit({ type: 'stats', stats }) }
+  // How long the agent worked on this reply, kept with it so a finished turn can fold into one
+  // "Worked for 2m 39s" line (Chat.jsx). Set on every way out: a turn that was stopped worked too.
+  const turnStartedAt = Date.now()
+  const finishStats = () => { assistant.workedMs = Date.now() - turnStartedAt; session.stats = stats; emit({ type: 'stats', stats }) }
   const roundCap = Math.min(maxRounds || MAX_ROUNDS, MAX_ROUNDS)
   for (let round = 0; round < roundCap; round++) {
     // ⚠️ STOP HAD EXACTLY ONE CHECK IN THIS WHOLE FUNCTION, and it sat after the

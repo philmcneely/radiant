@@ -1,6 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Markdown from './Markdown.jsx'
 import { Icon } from './Icons.jsx'
+import ComposerBar, { ThinkRail } from './ComposerBar.jsx'
+import { foldPlan } from '../turnfold.js'
 import { contextWindow } from '../../server/context-windows.js'
 import { SKILL_CATEGORIES } from '../../server/skill-categories.js'
 import { glyphColor } from '../theme.js'
@@ -552,7 +554,8 @@ function WorkingBadge ({ parts, thinkingActive, startedAt, lastEventAt }) {
   )
 }
 
-function AssistantMessage ({ parts, sent, routed, servedBy, lane, checkpoint, sessionId, onRestored, onComment, thinking, thinkingActive, thinkingSecs, streaming, model, agent, local, onChoose, onContinue, startedAt, lastEventAt, showThinking = true }) {
+function AssistantMessage ({ parts, sent, routed, servedBy, lane, checkpoint, sessionId, onRestored, onComment, thinking, thinkingActive, thinkingSecs, streaming, model, agent, local, onChoose, onContinue, startedAt, lastEventAt, showThinking = true, workedMs = 0 }) {
+  const [foldOpen, setFoldOpen] = useState(false)
   const waiting = streaming && !parts.length && !thinking
   // A local model that isn't resident cold-loads its weights before the first token.
   // Reveal the note only after a beat, so a warm model (fast first token) never shows it.
@@ -573,6 +576,7 @@ function AssistantMessage ({ parts, sent, routed, servedBy, lane, checkpoint, se
       </div>
       {thinking && showThinking ? <ThinkingTrace thinking={thinking} active={Boolean(thinkingActive)} seconds={thinkingSecs} /> : null}
       {(() => {
+        const renderParts = list => {
         // Walk the parts, gathering consecutive tool chips so a run of them can
         // be shown as one line. Anything that is not a chip — a sentence, a
         // widget, a notice — ends the run, because that is where the agent
@@ -586,7 +590,7 @@ function AssistantMessage ({ parts, sent, routed, servedBy, lane, checkpoint, se
             : <ToolRun key={'run' + out.length} parts={run} />)
           run = []
         }
-        parts.forEach((p, i) => {
+        list.forEach((p, i) => {
           if (p.type === 'tool' && !p.widget && p.name !== 'show_widget' && p.name !== 'todo_write' && p.name !== 'ask_user' && !p.hidden) {
             run.push(p)
             return
@@ -619,6 +623,25 @@ function AssistantMessage ({ parts, sent, routed, servedBy, lane, checkpoint, se
         })
         flush()
         return out
+        }
+        // A finished turn folds to one line and the answer stays — the rule lives in turnfold.js.
+        const plan = foldPlan(parts, { streaming })
+        if (!plan.fold) return renderParts(parts)
+        const { worked, answer, nTools, failed } = plan
+        const secs = Math.round((workedMs || 0) / 1000)
+        return (
+          <>
+            <div className={'worked-fold' + (foldOpen ? ' is-open' : '') + (failed ? ' has-fail' : '')}>
+              <button className='worked-fold-head' aria-expanded={foldOpen} onClick={() => setFoldOpen(o => !o)}>
+                <span className='worked-fold-caret' aria-hidden>{foldOpen ? '▾' : '▸'}</span>
+                <span className='worked-fold-label'>{secs >= 1 ? `Worked for ${clock(secs)}` : 'Worked'} · {nTools} tool calls</span>
+                {failed > 0 && <span className='worked-fold-fail'>✕ {failed} failed</span>}
+              </button>
+              {foldOpen && <div className='worked-fold-body'>{renderParts(worked)}</div>}
+            </div>
+            {renderParts(answer)}
+          </>
+        )
       })()}
       {!streaming && <Deliverables parts={parts} />}
       {!streaming && <Checkpoint ck={checkpoint} sessionId={sessionId} onRestored={onRestored} onComment={onComment} />}
@@ -673,51 +696,6 @@ const readPins = () => {
 // not reason, or a provider that rejects the parameter, is untouched until you
 // deliberately ask for a level. The three APIs each spell it differently; the
 // server maps this one word onto whichever shape the provider wants.
-const EFFORT_STOPS = [
-  ['auto', 'Auto', "The provider's own default"],
-  ['low', 'Low', 'Answer quickly, think briefly'],
-  ['medium', 'Medium', 'A balance of speed and care'],
-  ['high', 'High', 'Think hard before answering']
-]
-
-function ThinkRail ({ value, onPick }) {
-  const at = Math.max(0, EFFORT_STOPS.findIndex(([id]) => id === (value || 'auto')))
-  const rail = useRef(null)
-  const [box, setBox] = useState(null)
-
-  // ⚠️ THE PILL HAS TO MEASURE THE STOP, NOT ASSUME A QUARTER OF THE RAIL. The
-  // labels are different lengths — "Auto" against "Medium" — so four equal
-  // quarters never line up with them: the pill sat off-centre on Low and clipped
-  // Medium. Tony: "you didnt fix the spacing of low medium and high text in the
-  // thinking window." Measured, it fits whatever the words happen to be, in any
-  // language.
-  useLayoutEffect(() => {
-    const el = rail.current?.children?.[at + 1]   // +1: the pill itself is first
-    if (el) setBox({ left: el.offsetLeft, width: el.offsetWidth })
-  }, [at, value])
-
-  return (
-    <div className='think-rail' ref={rail} role='group' aria-label='Thinking level'>
-      <span
-        className='think-pill'
-        aria-hidden
-        style={box ? { transform: `translateX(${box.left}px)`, width: box.width } : { opacity: 0 }}
-      />
-      {EFFORT_STOPS.map(([id, label, hint], n) => (
-        <button
-          key={id}
-          className={'think-stop' + (n === at ? ' is-on' : '')}
-          aria-pressed={n === at}
-          data-tip={hint}
-          data-tip-below
-          title={hint}
-          onClick={() => onPick(id)}
-        >{label}</button>
-      ))}
-    </div>
-  )
-}
-
 export function ModelPicker ({ session, models, onPick, onRefresh, placeholder, clearLabel, effort, onSetEffort }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
@@ -1620,7 +1598,7 @@ export default function Chat ({ session, live, todos = [], stats, approval, ques
                     This turn ended without a reply. The model returned nothing — ask again, or try another model.
                   </div>
                 )
-                : <AssistantMessage key={i} parts={m.parts || []} sent={m.sent} routed={m.routed} servedBy={m.servedBy} lane={m.lane} checkpoint={m.checkpoint} sessionId={session.id} onRestored={r => onSessionReplaced?.(r.session)} onComment={f => { setDraft(d => (d ? d + '\n' : '') + `About ${f.split('/').pop()}: `); setTimeout(() => textareaRef.current?.focus(), 0) }} model={m.model} agent={m.agentId ? agents.find(a => a.id === m.agentId) || sessionAgent : sessionAgent} onChoose={onWidgetChoice} onContinue={continueTurn} showThinking={showThinking} />
+                : <AssistantMessage key={i} parts={m.parts || []} sent={m.sent} routed={m.routed} servedBy={m.servedBy} lane={m.lane} checkpoint={m.checkpoint} sessionId={session.id} onRestored={r => onSessionReplaced?.(r.session)} onComment={f => { setDraft(d => (d ? d + '\n' : '') + `About ${f.split('/').pop()}: `); setTimeout(() => textareaRef.current?.focus(), 0) }} model={m.model} agent={m.agentId ? agents.find(a => a.id === m.agentId) || sessionAgent : sessionAgent} onChoose={onWidgetChoice} onContinue={continueTurn} showThinking={showThinking} workedMs={m.workedMs} />
           )}
           {live && (
             <AssistantMessage
@@ -1837,104 +1815,32 @@ export default function Chat ({ session, live, todos = [], stats, approval, ques
                 ref={fileInputRef} type='file' multiple hidden
                 onChange={e => { if (e.target.files.length) addFiles(e.target.files); e.target.value = '' }}
               />
-              
-              {/* The microphone is on whichever Mac runs the server, so a client
-                  pointed at someone else's Radiant must not offer to open it. */}
-              {!onAnotherMac && (
-                <button
-                  className={'attach-btn is-dictate' + (dictating ? ' is-listening' : '')}
-                  onClick={toggleDictation}
-                  title={dictating ? 'Stop dictating' : 'Dictate'}
-                  aria-pressed={dictating}
-                  data-tip={dictating ? 'Stop dictating' : `Dictate — transcribed on this ${deviceNoun(platform)}`}
-                ><Icon.mic size={15} /><span className='pill-label'>{dictating ? 'Listening' : 'Dictate'}</span></button>)}
-              {/* Only rendered when Settings has voice on: off by default, and the
-                  button is the only thing that opens a call. */}
-              {voice && !onAnotherMac && (
-                <button
-                  className={'attach-btn is-voice' + (voice.state !== 'off' ? ' is-on' : '')}
-                  onClick={onToggleVoice}
-                  title={voice.state !== 'off' ? 'End the voice conversation' : 'Talk to Radiant'}
-                  aria-pressed={voice.state !== 'off'}
-                  data-tip={voice.state !== 'off' ? 'End the voice conversation' : 'Talk to Radiant — a live voice conversation\nover this chat. Audio goes to OpenAI (GPT-Live);\nthe thinking stays on this chat\u2019s model.'}
-                ><Icon.waves size={15} /><span className='pill-label'>{
-                  // ⚠️ SAY WHAT IS HAPPENING, NOT "ON A CALL". Tony: "that makes no
-                  // sense" — nobody is calling anyone. The word follows the voice
-                  // state: connecting, listening, working, and "End" once it is
-                  // simply on, because that is what pressing it does.
-                  voice.state === 'connecting' ? 'Connecting…'
-                    : voice.state === 'listening' ? 'Listening'
-                    : voice.state === 'working' ? 'Working…'
-                    : voice.state === 'closing' ? 'Ending…'
-                    : voice.state !== 'off' ? 'End' : 'Talk'
-                }</span></button>)}
-              {/* ⚠️ EVERY BUTTON ON THIS BAR GROWS INTO ITS WORD. Dictate and
-                  Talk did; Attach, Design and Skills stayed bare icons. Tony:
-                  "why arent there button popups for design or skills like the
-                  other tools on that bar?" A .pill-label is what makes one. */}
-              <button className='attach-btn' onClick={() => fileInputRef.current?.click()} title='Attach files or images' data-tip='Attach files or images'><Icon.plus size={16} /><span className='pill-label'>Attach</span></button>
-              <button className={'attach-btn' + (designBusy ? ' is-capturing' : '')} onClick={startDesign} disabled={designBusy} title='Design Mode' data-tip={'Design Mode — open a web page and click\nan element to capture its HTML, CSS &\na screenshot as context'}><Icon.target size={15} /><span className='pill-label'>{designBusy ? 'Capturing' : 'Design'}</span></button>
-              {activeSkillIds.length > 0 && activeSkillIds.map(id => {
-                const sk = skills.find(x => x.id === id)
-                return (
-                  <span key={id} className='chat-skill' title={sk?.description || 'Skill active in this chat'}>
-                    {sk?.name || 'skill'}
-                    <button className='chat-skill-x' onClick={() => onRemoveSkill?.(id)} title='Remove from this chat'>×</button>
-                  </span>
-                )
-              })}
-              <SkillMenu skills={skills} activeIds={activeSkillIds} onPick={c => applySlash({ kind: 'skill', cmd: c.cmd })} />
-              <ModelPicker session={session} models={models} onPick={onPickModel} onRefresh={onRefreshModels}
-                  effort={session.effort}
-                  onSetEffort={onSetEffort}
-                />
-              <button
-                className={'pill-toggle' + (toolsOn ? ' on' : '')}
-                onClick={onToggleTools}
-                data-tip={'Agent tools: read/write files and run\ncommands in the workspace folder.\nClick to turn ' + (toolsOn ? 'off' : 'on') + '.'}
-              >
-                <Icon.wrench size={15} />
-                <span className='pill-label'>tools {toolsOn ? 'on' : 'off'}</span>
-              </button>
-              <button
-                className={'pill-toggle' + (session.computerControl ? ' on' : '')}
-                onClick={onToggleComputer}
-                data-tip={'Computer control: the model drives the browser\nand desktop of ' + (onAnotherMac ? serverHost : `this ${deviceNoun(platform)}`) + '.\nNeeds a vision model + the desktop permissions\nin Settings \u2192 Automation.\nClick to turn ' + (session.computerControl ? 'off' : 'on')}
-              >
-                <Icon.monitor size={15} />
-                <span className='pill-label'>computer {session.computerControl ? 'on' : 'off'}
-                  {onAnotherMac && session.computerControl && ` · ${serverHost}`}</span>
-              </button>
-              <button
-                className={'pill-toggle' + (session.planMode ? ' on' : '')}
-                onClick={onTogglePlan}
-                data-tip={'Plan mode: the agent researches and proposes a\nplan for your approval before changing anything.\nClick to turn ' + (session.planMode ? 'off' : 'on') + '.'}
-              >
-                <Icon.clipboard size={15} />
-                <span className='pill-label'>plan {session.planMode ? 'on' : 'off'}</span>
-              </button>
-              {/* ⚠️ THIS HIDES THE REASONING, IT DOES NOT STOP IT. The model still
-                  thinks and you are still billed for it — the thinking LEVEL is the
-                  slider in the model picker, and they are different controls that
-                  would be easy to confuse. The tip says so rather than leaving
-                  someone to infer a saving that is not there. */}
-              <button
-                className={'pill-toggle' + (showThinking ? ' on' : '')}
-                onClick={onToggleThinking}
-                data-tip={'Thinking: show the model\u2019s reasoning as it works.\nThis only hides it \u2014 the model still thinks, and you\nare still billed for it. Set how hard it thinks in\nthe model picker.\nClick to turn ' + (showThinking ? 'off' : 'on') + '.'}
-              >
-                <Icon.bulb size={15} />
-                <span className='pill-label'>thinking {showThinking ? 'on' : 'off'}</span>
-              </button>
-                
-              <button
-                className={'pill-toggle' + (approvalMode === 'off' ? ' warn' : approvalMode === 'auto' ? ' on' : '')}
-                onClick={onCycleApproval}
-                data-tip={'Permissions — what the agent may do without asking:\n• Ask each: confirm every command (safest)\n• Auto: run low-risk commands, ask for risky ones\n• Allow all: never ask (fastest, least safe)\nClick to cycle.'}
-              >
-                {approvalMode === 'off' ? <Icon.unlock size={15} /> : approvalMode === 'auto' ? <Icon.zap size={15} /> : <Icon.hand size={15} />}
-                <span className='pill-label'>{approvalMode === 'off' ? 'allow all' : approvalMode === 'auto' ? 'auto approve' : 'ask each'}</span>
-              </button>
+              {/* ⚠️ THE BAR IS ITS OWN COMPONENT NOW (ComposerBar.jsx) — a "+" menu for
+                  the occasional things and labeled chips for model, thinking and
+                  permissions. The microphone is on whichever Mac runs the server, so
+                  a client pointed at someone else's Radiant must not offer to open it. */}
+              <ComposerBar
+                session={session}
+                skillMenu={<SkillMenu skills={skills} activeIds={activeSkillIds} onPick={c => applySlash({ kind: 'skill', cmd: c.cmd })} />}
+                modelPicker={<ModelPicker session={session} models={models} onPick={onPickModel} onRefresh={onRefreshModels} effort={session.effort} onSetEffort={onSetEffort} />}
+                skillChips={activeSkillIds.length > 0 ? activeSkillIds.map(id => {
+                  const sk = skills.find(x => x.id === id)
+                  return (
+                    <span key={id} className='chat-skill' title={sk?.description || 'Skill active in this chat'}>
+                      {sk?.name || 'skill'}
+                      <button className='chat-skill-x' onClick={() => onRemoveSkill?.(id)} title='Remove from this chat'>×</button>
+                    </span>
+                  )
+                }) : null}
+                effort={session.effort} onSetEffort={onSetEffort}
+                toolsOn={toolsOn} onToggleTools={onToggleTools} onToggleComputer={onToggleComputer} onTogglePlan={onTogglePlan}
+                showThinking={showThinking} onToggleThinking={onToggleThinking}
+                approvalMode={approvalMode} onCycleApproval={onCycleApproval}
+                onAttach={() => fileInputRef.current?.click()} onDesign={startDesign} designBusy={designBusy}
+                canDictate={!onAnotherMac} dictating={dictating} onToggleDictation={toggleDictation}
+                voice={voice && !onAnotherMac ? voice : null} onToggleVoice={onToggleVoice}
+                onAnotherMac={onAnotherMac} serverHost={serverHost} machineNoun={deviceNoun(platform)}
+              />
             </div>
             <div className='composer-actions'>
               {usage && (usage.input || usage.output) ? (
