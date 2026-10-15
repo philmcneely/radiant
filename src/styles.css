@@ -3837,3 +3837,59 @@ html[data-window-chrome='native'] .brand { padding-top: 12px; }
 .worked-fold-caret { width: 10px; font-size: 10px; }
 .worked-fold-fail { color: var(--danger); font-size: 11.5px; }
 .worked-fold-body { margin: 4px 0 8px; padding-left: 12px; border-left: 1px solid var(--border); }
+
+/* ── the Changes panel (ChangesPanel.jsx) ─────────────────────────────────── */
+.chg { display: flex; flex-direction: column; gap: 10px; padding: 12px 12px 24px; font-size: 12.5px; }
+.chg-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.chg-title { display: flex; align-items: baseline; gap: 8px; font-weight: 600; font-size: 13.5px; color: var(--text); }
+.chg-add { color: oklch(0.78 0.15 150); font-family: var(--font-mono); font-size: 11.5px; font-weight: 500; }
+.chg-del { color: oklch(0.72 0.16 25); font-family: var(--font-mono); font-size: 11.5px; font-weight: 500; }
+.chg-branch { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-muted); font-size: 11.5px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chg-commit { display: flex; flex-direction: column; gap: 6px; }
+.chg-msg { width: 100%; box-sizing: border-box; resize: vertical; min-height: 44px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text); font: inherit; font-size: 12.5px; }
+.chg-msg:focus { outline: none; border-color: var(--accent); }
+.chg-commit-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--bg-raised); color: var(--text); font-size: 12.5px; font-weight: 500; cursor: pointer; }
+.chg-commit-btn:hover:not(:disabled) { background: var(--accent-wash); border-color: var(--accent-dim); color: var(--accent); }
+.chg-commit-btn:disabled { opacity: .45; cursor: default; }
+.chg-flash { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 9px; font-size: 12px; background: var(--bg-raised); border: 1px solid var(--border); white-space: pre-wrap; }
+.chg-flash.is-ok { border-color: color-mix(in oklab, oklch(0.78 0.15 150) 40%, transparent); }
+.chg-flash.is-err { border-color: color-mix(in oklab, var(--danger) 50%, transparent); color: var(--danger); }
+.chg-flash-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.chg-flash-btn { border: 1px solid var(--border-strong); background: transparent; color: var(--accent); border-radius: 7px; padding: 2px 8px; font-size: 11.5px; cursor: pointer; }
+.chg-flash-x { border: 0; background: none; color: var(--text-faint); cursor: pointer; font-size: 14px; line-height: 1; }
+.chg-confirm { padding: 10px; border-radius: 10px; border: 1px solid color-mix(in oklab, var(--danger) 45%, transparent); background: color-mix(in oklab, var(--danger) 7%, transparent); display: flex; flex-direction: column; gap: 8px; }
+.chg-confirm-row { display: flex; gap: 8px; }
+.chg-listhead { display: flex; align-items: center; justify-content: space-between; padding-top: 4px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); }
+.chg-all { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.chg-undo-all { border: 0; background: none; color: var(--text-faint); font-size: 11px; cursor: pointer; text-transform: none; letter-spacing: 0; }
+.chg-undo-all:hover { color: var(--danger); }
+.chg-list { display: flex; flex-direction: column; }
+.chg-file { border-radius: 8px; }
+.chg-file.is-open { background: color-mix(in oklab, var(--bg-raised) 60%, transparent); }
+.chg-row { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 8px; }
+.chg-row:hover { background: var(--bg-hover); }
+.chg-check { flex: none; accent-color: var(--accent); margin: 0; }
+.chg-name { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; padding: 0; font: inherit; }
+.chg-file-name { font-weight: 500; white-space: nowrap; }
+.chg-file-dir { color: var(--text-faint); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+.chg-counts { display: inline-flex; gap: 6px; flex: none; }
+.chg-bin { color: var(--text-faint); font-size: 11px; }
+.chg-letter { flex: none; width: 14px; text-align: center; font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text-muted); }
+.chg-letter.l-M { color: oklch(0.80 0.14 85); }
+.chg-letter.l-A, .chg-letter.l-U { color: oklch(0.78 0.15 150); }
+.chg-letter.l-D, .chg-letter.l-conf { color: oklch(0.72 0.16 25); }
+.chg-letter.l-R { color: var(--accent); }
+.chg-undo { flex: none; border: 0; background: none; color: var(--text-faint); cursor: pointer; opacity: 0; padding: 2px; display: inline-flex; }
+.chg-row:hover .chg-undo, .chg-undo:focus-visible { opacity: 1; }
+.chg-undo:hover { color: var(--danger); }
+.chg-body { padding: 2px 0 8px 22px; }
+.chg-diff { font-size: 11.5px; line-height: 1.5; border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; background: var(--bg-input); }
+.chg-line { padding: 0 10px; white-space: pre; min-width: max-content; }
+.chg-line.add { background: color-mix(in oklab, oklch(0.78 0.15 150) 14%, transparent); }
+.chg-line.del { background: color-mix(in oklab, oklch(0.72 0.16 25) 14%, transparent); }
+.chg-line.hunk { color: var(--text-faint); background: color-mix(in oklab, var(--accent) 7%, transparent); }
+.chg-more { margin: 6px 10px; border: 0; background: none; color: var(--accent); font-size: 11.5px; cursor: pointer; }
+.chg-note { color: var(--text-faint); font-size: 11.5px; padding: 6px 8px; }
+.chg-note.is-err { color: var(--danger); }
+.chg-empty { padding: 28px 18px; color: var(--text-muted); text-align: center; line-height: 1.5; font-size: 12.5px; }
+.chg-empty.is-err { color: var(--danger); }

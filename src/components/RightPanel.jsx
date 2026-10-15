@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Terminal from './Terminal.jsx'
 import Preview from './Preview.jsx'
+import ChangesPanel from './ChangesPanel.jsx'
 import GlideSelect from './GlideSelect.jsx'
 import { Icon } from './Icons.jsx'
 
@@ -71,6 +72,7 @@ function ForYou ({ waiting, onOpen }) {
 
 const SECTIONS = [
   { id: 'activity', label: 'Activity' },
+  { id: 'changes', label: 'Changes' },
   { id: 'terminal', label: 'Terminal' },
   { id: 'preview', label: 'Preview' },
   { id: 'foryou', label: 'For you', hint: '⇧⌘I' }
@@ -141,6 +143,7 @@ export default function RightPanel ({ tab, onTab, activity, cwd, mode, onClose, 
             {[...activity].reverse().map(item => <ActivityItem key={item.id + item.at} item={item} />)}
           </div>
         )}
+        {tab === 'changes' && <ChangesPanel session={session} />}
         {tab === 'terminal' && <Terminal cwd={cwd} mode={mode} />}
         {tab === 'preview' && <Preview session={session} visible />}
         {tab === 'foryou' && <ForYou waiting={waiting} onOpen={onOpenSession} />}
