@@ -1,3 +1,4 @@
+import { approvedApps, revokeApp } from './computer-apps.js'
 import express from 'express'
 import { snapshot as ckSnapshot, changes as ckChanges, fileDiff as ckFileDiff, restore as ckRestore, eligible as ckEligible } from './checkpoints.js'
 import { listGatewayAgents } from './openclaw.js'
@@ -433,6 +434,8 @@ app.put('/api/settings', (req, res) => {
   // cliAgents decides whether this Mac's Claude Code / Codex history is readable, so
   // only the Mac itself changes it (a device on the network cannot switch it on).
   if ('cliAgents' in body) { if (isLocalRequest(req)) body.cliAgents = normalizeCliSettings(body.cliAgents, loadMachineSettings().cliAgents); else delete body.cliAgents }
+  // the always-allowed apps are written only by the approval card, never by a settings save
+  delete body.computerApps
   const machine = {}
   for (const k of MACHINE_KEYS) if (k in body) machine[k] = body[k]
   if (Object.keys(machine).length) saveMachineSettings(machine)
@@ -1681,6 +1684,11 @@ app.post('/api/oauth/:id/signout', (req, res) => {
 // (Imported here, mid-file, so a concurrent edit to the import block above cannot collide.)
 import { registerCliAgentRoutes, normalizeCliSettings } from './cli-agents-routes.js'
 import { loadMachineSettings } from './config.js'
+// apps the agent may always control on the desktop (server/computer-apps.js). Listing and
+// revoking only; granting happens through the approval card in a chat, never here.
+app.get('/api/computer-apps', (req, res) => res.json({ supported: process.platform === 'darwin', always: approvedApps() }))
+app.delete('/api/computer-apps/:id', (req, res) => res.json({ always: revokeApp(req.params.id) }))
+
 const cliAgents = registerCliAgentRoutes(app, {
   getCliSettings: () => loadMachineSettings().cliAgents, // fresh each time: PUT /api/settings writes the machine file, not `config`
   loadSession, saveSession, listSessions, isLocalRequest

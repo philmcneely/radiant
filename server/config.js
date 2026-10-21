@@ -33,7 +33,7 @@ export function defaultDataDir () { return path.join(os.homedir(), '.radiant') }
 // cliAgents is here for the same reason: it says whether THIS Mac lets Radiant read its
 // Claude Code / Codex history (server/cli-agents-routes.js). Opting in on one Mac must
 // not switch it on for another Mac that shares the folder and never agreed.
-export const MACHINE_KEYS = ['defaultModel', 'defaultProvider', 'defaultCwd', 'cliAgents']
+export const MACHINE_KEYS = ['defaultModel', 'defaultProvider', 'defaultCwd', 'cliAgents', 'computerApps']
 const MACHINE_FILE = path.join(os.homedir(), '.radiant-machine.json')
 
 export function loadMachineSettings () {

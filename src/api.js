@@ -587,6 +587,11 @@ export function phoneLink (address, token) {
 export const EXTENSION_ID = 'jhljglakgocklinpblgcoppljflnacfk'
 export const EXTENSION_STORE_URL = `https://chromewebstore.google.com/detail/${EXTENSION_ID}`
 
+export const computerAppsApi = {
+  list: () => json('GET', '/api/computer-apps'),
+  revoke: id => json('DELETE', `/api/computer-apps/${encodeURIComponent(id)}`)
+}
+
 export const cliApi = {
   agents: fresh => json('GET', `/api/cli-agents${fresh ? '?fresh=1' : ''}`),
   sessions: ({ tool, q, limit } = {}) => json('GET', `/api/cli-sessions?${new URLSearchParams({ ...(tool ? { tool } : {}), ...(q ? { q } : {}), limit: String(limit || 60) })}`),

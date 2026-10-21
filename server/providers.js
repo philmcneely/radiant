@@ -6,6 +6,7 @@ import { fetchRetry, isTransient } from './util.js'
 import { TOOL_DEFS, runTool, outsideWorkspace, archiveResult, ARCHIVE_MIN } from './tools.js'
 import { commandRisk } from './util.js'
 import { COMPUTER_TOOL_DEFS, COMPUTER_TOOL_NAMES, COMPUTER_SAFE, runComputerTool } from './computer-tools.js'
+import { appGate } from './computer-apps.js'
 import { boundResult, withBudget, MAX_TOOL_MS, ToolTimeout } from './tool-bounds.js'
 import { COPILOT_HEADERS } from './oauth.js'
 import { contextWindow } from './context-windows.js'
@@ -1644,6 +1645,8 @@ export async function runTurn ({ provider, model, routed, verifyClaims, apiKey, 
         // all leave through here, so the time budget and the output cap are
         // impossible to skip. They used to be per-implementation, which meant
         // three of twelve builtins truncated and MCP results were unbounded.
+        // asked BEFORE the time budget starts: a person deciding is not a slow tool
+        const gate = isComputer ? await appGate(call, { session, requestUserChoice, emit }) : { ok: true }
         try {
           await withBudget(call.name, MAX_TOOL_MS, async () => {
             if (call.name === 'ask_agent') {
@@ -1660,9 +1663,12 @@ export async function runTurn ({ provider, model, routed, verifyClaims, apiKey, 
             } else if (isMcp) {
               part.result = callMcp ? await callMcp(call.name, call.args) : 'MCP tool unavailable.'
             } else if (isComputer) {
-              const r = await runComputerTool(call.name, call.args)
-              part.result = r.content
-              if (r.image) part.resultImage = r.image
+              // which APP would this land in, and has the person said it may? See computer-apps.js
+              if (!gate.ok) { part.denied = true; part.result = gate.result } else {
+                const r = await runComputerTool(call.name, call.args)
+                part.result = r.content
+                if (r.image) part.resultImage = r.image
+              }
             } else {
               part.result = await runTool(call.name, call.args, cwd, signal)
             }

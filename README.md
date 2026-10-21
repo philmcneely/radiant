@@ -77,6 +77,12 @@
   (with a second opinion on each from a small decision model), or allow all.
 - **Undo** — every reply that edits files leaves a checkpoint; roll the files
   back and keep the conversation.
+- **Computer control, app by app** (opt-in, Mac) — a vision model can drive
+  the browser and the desktop, and Radiant asks about each app by name before
+  it clicks or types in it: this chat, always, or no. Terminals and Radiant
+  itself are never allowed, even on "Allow all"; password managers and System
+  Settings are asked every chat. Always-allowed apps are listed in Settings,
+  each with a Revoke button.
 - **Changes panel** — a right-hand tab listing what the agent changed in the
   chat's folder: M/A/D/R/U letters, +/- line counts, an inline diff, a commit
   box for the files you tick, and Undo with a one-hour Restore. Nothing is

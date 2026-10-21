@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { SKILL_CATEGORIES } from '../../server/skill-categories.js'
 import qrcode from 'qrcode-generator'
 import { verdict, FIT_LABEL, FITS_WELL, FITS_TIGHT, FITS_NO, COMFORTABLE } from '../fit.js'
-import { api, cliApi, startDownload, getDownloads, cancelDownload, streamQuantize, getServer, setServer, testServer, saveToFile, deviceNoun, phoneLink, EXTENSION_STORE_URL } from '../api.js'
+import { api, cliApi, computerAppsApi, startDownload, getDownloads, cancelDownload, streamQuantize, getServer, setServer, testServer, saveToFile, deviceNoun, phoneLink, EXTENSION_STORE_URL } from '../api.js'
 import { THEMES, MODES, FONTS, UI_SCALES, applyTheme, hexToOklch, accentHex, glyphColor } from '../theme.js'
 import { paletteWarnings, deriveAccent } from '../palette.js'
 import { MOTIONS } from './MotionBackground.jsx'
@@ -239,6 +239,29 @@ const LIVE_VOICES = [
   ['willow', 'Willow — Irish, feminine'], ['stone', 'Stone — Irish, masculine'], ['delta', 'Delta — Southern U.S., feminine'],
   ['cinder', 'Cinder — Southern U.S., masculine'], ['beacon', 'Beacon — Filipino English, masculine']
 ]
+/** Desktop apps the agent may always control. They are only ever added by answering the card in a chat. */
+function ComputerAppsBlock () {
+  const [info, setInfo] = useState(null)
+  useEffect(() => { computerAppsApi.list().then(setInfo).catch(() => setInfo(null)) }, [])
+  if (!info?.supported) return null
+  return (
+    <div style={{ margin: '14px 0 4px' }}>
+      <div style={{ fontSize: 13, fontWeight: 500 }}>Apps the agent may control</div>
+      <div style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 8px' }}>
+        With computer control on, the first time the agent wants to click or type in an app, Radiant asks you: this chat, always, or no. Terminals and Radiant itself are never allowed; password managers and System Settings are asked every chat.
+      </div>
+      {info.always.length === 0
+        ? <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>No app is always allowed.</div>
+        : info.always.map(a => (
+          <div key={a.id} className='check-row' style={{ justifyContent: 'space-between' }}>
+            <span>{a.name} <span className='desc'>{a.id}</span></span>
+            <button className='small-btn' onClick={() => computerAppsApi.revoke(a.id).then(r => setInfo(i => ({ ...i, always: r.always })))}>Revoke</button>
+          </div>
+        ))}
+    </div>
+  )
+}
+
 /** Claude Code and Codex, signed in on this Mac: off until asked, private to this Mac until told otherwise. */
 function CliAgentsBlock ({ s, onSettings }) {
   const cli = s.cliAgents || {}
@@ -2083,6 +2106,7 @@ function AgentPane ({ config, onSettings }) {
           <strong>Project folder only</strong> lets commands write inside the chat's project folder, temporary files and package caches, and nowhere else — not your other projects, not your settings files. <strong>No internet</strong> also blocks the web, while local servers keep working. A blocked command says so, and the agent is told to ask you rather than try again. Installing things globally (Homebrew, <code>npm -g</code>) needs it off.
         </div>
       </div>
+      <ComputerAppsBlock />
       <CliAgentsBlock s={s} onSettings={onSettings} />
       <label className='check-row'>
         <input
@@ -3323,6 +3347,7 @@ const GUIDE = [
   {
     title: 'Chat & agents',
     items: [
+      ['Computer control now asks which app, and never touches terminals', 'With computer control on, the first time the agent wants to click or type in an app on your Mac, Radiant now asks about that app by name: \u201cAllow for this chat\u201d, \u201cAlways allow\u201d, or \u201cDeny\u201d. Before, it asked before each action but had no idea which app the click would land in, so a click over your password manager looked the same as one over Notes. Some apps are never allowed, in any mode including Allow all: Terminal and its relatives (a click there is a command) and Radiant itself (its question card is in this window, so the agent could answer for you). Password managers and System Settings are asked every chat, with no Always option. Browsers carry a warning, since you are signed in to things there. Apps you chose Always for are listed in Settings \u2192 Agent \u2192 Apps the agent may control, each with a Revoke button. A chat running without you (a task or a loop) cannot ask, so it only uses apps you already approved. This is Mac only for now. The idea comes from LCU, a project that does the same for Codex\u2019s computer use.'],
       ['Use your Claude Code and Codex subscriptions, and continue their chats', 'If you already pay for Claude Code or Codex and are signed in to them on this Mac, Radiant can use them without an API key. Turn it on in Settings \u2192 Agent \u2192 \u201cClaude Code and Codex sessions\u201d. Then the sidebar\u2019s \u201cClaude Code & Codex sessions\u201d button lists the chats you started in those apps, grouped by folder \u2014 pick one and it opens as a Radiant chat with its history, and carries on through the same tool. You can also choose Claude Code or Codex from a chat\u2019s model menu to start a new one. What to know: the saved sessions are a full record of what you asked and which files were opened, so this is off until you turn it on, and your phone or other devices cannot see them unless you also allow that. Radiant never reads the tools\u2019 sign-in files. In these chats the tool is the agent, so Radiant\u2019s own tools, memory and skills do not apply, and attachments are not sent. The permission button maps onto the tool\u2019s own: \u201cAsk each\u201d makes it read-only (nobody can answer a question while it works in the background), \u201cAuto approve\u201d lets it edit files in the folder, and \u201cAllow all\u201d lets it do anything on this Mac. If Claude Code says you are signed out, run claude once in Terminal.'],
       ['The strip under the message box now says what it is set to', 'It used to be a row of small icons that only spelled out their name when you hovered, so you could not tell at a glance whether plan mode or \u201callow all\u201d was on. Now the model, the thinking level and the permission mode are always on screen with their words, and the \u201c+\u201d button holds the things you use now and then: attach a file, Design Mode, dictate, talk to Radiant, and the switches for agent tools, computer control, plan mode and showing the model\u2019s thinking. If a chat is in an unusual state \u2014 plan mode on, computer control on, tools off \u2014 it gets its own labeled chip, one click from turning off. Nothing was removed; it just stopped hiding.'],
       ['Long agent turns fold into \u201cWorked for 2m 39s\u201d', 'When the agent finishes a turn that took three or more tool calls, the commands, file reads and edits fold into one quiet line \u2014 \u201cWorked for 2m 39s \u00b7 7 tool calls\u201d \u2014 and its answer sits right under it. Click the line to see every step. A turn that is still running, was stopped, or is waiting on you stays open so you never miss something that needs you, and failed steps are counted so a problem is not hidden by the fold.'],
